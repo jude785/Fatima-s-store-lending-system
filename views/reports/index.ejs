@@ -1,0 +1,88 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Reports</h1>
+    <p class="text-muted mb-0">Generate daily, weekly, monthly, and yearly lending summaries.</p>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Report Type</label>
+        <select name="report_type" class="form-select">
+          <% ['Daily','Weekly','Monthly','Yearly','Outstanding Balance','Collection'].forEach(type => { %>
+            <option value="<%= type %>" <%= filters.reportType === type ? 'selected' : '' %>><%= type %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3"><label class="form-label">Date From</label><input type="date" name="date_from" class="form-control" value="<%= filters.dateFrom %>"></div>
+      <div class="col-md-3"><label class="form-label">Date To</label><input type="date" name="date_to" class="form-control" value="<%= filters.dateTo %>"></div>
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-primary"><i class="bi bi-funnel"></i>Generate</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i>Print</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-4"><div class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><div><div class="stat-label">Total Loans</div><div class="display-6 fw-bold">&#8369; <%= Number(totals.totalLoans).toFixed(2) %></div></div><span class="stat-icon info"><i class="bi bi-cash-stack"></i></span></div></div></div>
+  <div class="col-md-4"><div class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><div><div class="stat-label">Total Collections</div><div class="display-6 fw-bold">&#8369; <%= Number(totals.totalCollections).toFixed(2) %></div></div><span class="stat-icon"><i class="bi bi-wallet2"></i></span></div></div></div>
+  <div class="col-md-4"><div class="card stat-card border-0 shadow-sm h-100"><div class="card-body"><div><div class="stat-label">Outstanding Balance</div><div class="display-6 fw-bold">&#8369; <%= Number(totals.totalOutstanding).toFixed(2) %></div></div><span class="stat-icon accent"><i class="bi bi-exclamation-circle"></i></span></div></div></div>
+</div>
+
+<form action="/reports/save-summary" method="POST" class="mb-4">
+  <input type="hidden" name="report_type" value="<%= filters.reportType %>">
+  <input type="hidden" name="date_from" value="<%= filters.dateFrom %>">
+  <input type="hidden" name="date_to" value="<%= filters.dateTo %>">
+  <input type="hidden" name="total_loans" value="<%= totals.totalLoans %>">
+  <input type="hidden" name="total_collections" value="<%= totals.totalCollections %>">
+  <input type="hidden" name="total_outstanding" value="<%= totals.totalOutstanding %>">
+  <button class="btn btn-outline-primary"><i class="bi bi-database-check"></i>Save Report Summary to Database</button>
+</form>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white"><h2 class="h5 mb-0">Loan Transactions</h2></div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0 align-middle">
+      <thead class="table-light"><tr><th>Loan ID</th><th>Borrower</th><th>Date</th><th>Total</th><th>Balance</th><th>Status</th></tr></thead>
+      <tbody>
+        <% if (loanRows.length) { loanRows.forEach(row => { %>
+          <tr>
+            <td>#<%= row.loan_id %></td>
+            <td><%= row.borrower_name %></td>
+            <td><%= moment(row.loan_date).format('YYYY-MM-DD') %></td>
+            <td>&#8369; <%= Number(row.total_amount).toFixed(2) %></td>
+            <td>&#8369; <%= Number(row.remaining_balance).toFixed(2) %></td>
+            <td><span class="badge text-bg-<%= row.loan_status === 'Paid' ? 'success' : 'warning' %>"><%= row.loan_status %></span></td>
+          </tr>
+        <% }) } else { %>
+          <tr><td colspan="6" class="text-center text-muted py-3">No loan records for the selected period.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white"><h2 class="h5 mb-0">Payment Transactions</h2></div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0 align-middle">
+      <thead class="table-light"><tr><th>Payment ID</th><th>Borrower</th><th>Date</th><th>Amount</th><th>Updated Balance</th></tr></thead>
+      <tbody>
+        <% if (paymentRows.length) { paymentRows.forEach(row => { %>
+          <tr>
+            <td>#<%= row.payment_id %></td>
+            <td><%= row.borrower_name %></td>
+            <td><%= moment(row.payment_date).format('YYYY-MM-DD') %></td>
+            <td>&#8369; <%= Number(row.payment_amount).toFixed(2) %></td>
+            <td>&#8369; <%= Number(row.updated_balance).toFixed(2) %></td>
+          </tr>
+        <% }) } else { %>
+          <tr><td colspan="5" class="text-center text-muted py-3">No payment records for the selected period.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

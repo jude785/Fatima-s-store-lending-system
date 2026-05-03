@@ -1,0 +1,25 @@
+<div class="mb-4">
+  <h1 class="h3 fw-bold mb-1">Edit Borrower</h1>
+  <p class="text-muted mb-0">Update borrower information.</p>
+</div>
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-4">
+    <form action="/borrowers/<%= borrower.borrower_id %>?_method=PUT" method="POST" class="row g-3">
+      <div class="col-md-4"><label class="form-label">First Name</label><input name="first_name" class="form-control" value="<%= borrower.first_name %>" required></div>
+      <div class="col-md-4"><label class="form-label">Middle Name</label><input name="middle_name" class="form-control" value="<%= borrower.middle_name %>"></div>
+      <div class="col-md-4"><label class="form-label">Last Name</label><input name="last_name" class="form-control" value="<%= borrower.last_name %>" required></div>
+      <div class="col-md-6"><label class="form-label">Address</label><input name="address" class="form-control" value="<%= borrower.address %>" required></div>
+      <div class="col-md-3"><label class="form-label">Contact Number</label><input name="contact_number" class="form-control" value="<%= borrower.contact_number %>" required></div>
+      <div class="col-md-3"><label class="form-label">Borrower Status</label>
+        <select name="borrower_status" class="form-select">
+          <option value="Active" <%= borrower.borrower_status === 'Active' ? 'selected' : '' %>>Active</option>
+          <option value="Inactive" <%= borrower.borrower_status === 'Inactive' ? 'selected' : '' %>>Inactive</option>
+        </select>
+      </div>
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary"><i class="bi bi-check2-circle"></i>Update Borrower</button>
+        <a href="/borrowers" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i>Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

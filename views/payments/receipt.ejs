@@ -1,0 +1,48 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Payment Receipt</h1>
+    <p class="text-muted mb-0">Printable proof of borrower payment.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print Receipt</button>
+    <form action="/payments/<%= payment.payment_id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this payment and its receipt? The loan balance will be recalculated.');">
+      <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash"></i>Delete Payment</button>
+    </form>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm receipt-card mx-auto">
+  <div class="card-body p-5">
+    <div class="text-center mb-4">
+      <h2 class="h4 fw-bold mb-1">FATIMA'S STORE</h2>
+      <p class="mb-0 text-muted">Lending Payment Receipt</p>
+    </div>
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <p class="mb-1"><strong>Receipt No.:</strong> <%= payment.receipt_id %></p>
+        <p class="mb-1"><strong>Payment ID:</strong> <%= payment.payment_id %></p>
+        <p class="mb-0"><strong>Date:</strong> <%= moment(payment.receipt_date).format('YYYY-MM-DD') %></p>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <p class="mb-1"><strong>Borrower:</strong> <%= payment.borrower_name %></p>
+        <p class="mb-1"><strong>Contact:</strong> <%= payment.contact_number %></p>
+        <p class="mb-0"><strong>Address:</strong> <%= payment.address %></p>
+      </div>
+    </div>
+    <div class="table-responsive mb-4">
+      <table class="table table-bordered align-middle mb-0">
+        <tbody>
+          <tr><th width="40%">Loan Date</th><td><%= moment(payment.loan_date).format('YYYY-MM-DD') %></td></tr>
+          <tr><th>Total Loan Amount</th><td>&#8369; <%= Number(payment.total_amount).toFixed(2) %></td></tr>
+          <tr><th>Amount Paid</th><td>&#8369; <%= Number(payment.amount_paid).toFixed(2) %></td></tr>
+          <tr><th>Remaining Balance</th><td>&#8369; <%= Number(payment.remaining_balance).toFixed(2) %></td></tr>
+          <tr><th>Remarks</th><td><%= payment.remarks %></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="row mt-5">
+      <div class="col-6 text-center"><div class="signature-line"></div><small class="text-muted">Borrower Signature</small></div>
+      <div class="col-6 text-center"><div class="signature-line"></div><small class="text-muted">Authorized Staff</small></div>
+    </div>
+  </div>
+</div>

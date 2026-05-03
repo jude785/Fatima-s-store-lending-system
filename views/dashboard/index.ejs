@@ -1,0 +1,96 @@
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Dashboard</h1>
+    <p class="text-muted mb-0">Overview of borrowers, active lending, collections, and balances.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/borrowers/create" class="btn btn-outline-primary"><i class="bi bi-person-plus me-1"></i>Add Borrower</a>
+    <a href="/loans/create" class="btn btn-primary"><i class="bi bi-cash-stack me-1"></i>New Loan</a>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card border-0 shadow-sm h-100"><div class="card-body">
+      <div>
+        <div class="stat-label">Total Borrowers</div>
+        <div class="display-6 fw-bold"><%= stats.borrowers %></div>
+      </div>
+      <span class="stat-icon"><i class="bi bi-people"></i></span>
+    </div></div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card border-0 shadow-sm h-100"><div class="card-body">
+      <div>
+        <div class="stat-label">Active Loans</div>
+        <div class="display-6 fw-bold"><%= stats.activeLoans %></div>
+      </div>
+      <span class="stat-icon info"><i class="bi bi-clipboard2-data"></i></span>
+    </div></div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card border-0 shadow-sm h-100"><div class="card-body">
+      <div>
+        <div class="stat-label">Total Collections</div>
+        <div class="display-6 fw-bold">&#8369; <%= Number(stats.collections).toFixed(2) %></div>
+      </div>
+      <span class="stat-icon"><i class="bi bi-wallet2"></i></span>
+    </div></div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card border-0 shadow-sm h-100"><div class="card-body">
+      <div>
+        <div class="stat-label">Outstanding Balance</div>
+        <div class="display-6 fw-bold">&#8369; <%= Number(stats.balances).toFixed(2) %></div>
+      </div>
+      <span class="stat-icon accent"><i class="bi bi-exclamation-circle"></i></span>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white"><h2 class="h5 mb-0">Recent Loans</h2></div>
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead class="table-light"><tr><th>ID</th><th>Borrower</th><th>Total</th><th>Status</th></tr></thead>
+          <tbody>
+            <% if (recentLoans.length) { recentLoans.forEach(loan => { %>
+              <tr>
+                <td><a href="/loans/<%= loan.loan_id %>">#<%= loan.loan_id %></a></td>
+                <td><%= loan.borrower_name %></td>
+                <td>&#8369; <%= Number(loan.total_amount).toFixed(2) %></td>
+                <td><span class="badge text-bg-primary"><%= loan.loan_status %></span></td>
+              </tr>
+            <% }) } else { %>
+              <tr><td colspan="4" class="text-center text-muted py-4">No records yet.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white"><h2 class="h5 mb-0">Recent Payments</h2></div>
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead class="table-light"><tr><th>ID</th><th>Borrower</th><th>Amount</th><th>Balance</th></tr></thead>
+          <tbody>
+            <% if (recentPayments.length) { recentPayments.forEach(payment => { %>
+              <tr>
+                <td><a href="/payments/<%= payment.payment_id %>/receipt">#<%= payment.payment_id %></a></td>
+                <td><%= payment.borrower_name %></td>
+                <td>&#8369; <%= Number(payment.payment_amount).toFixed(2) %></td>
+                <td>&#8369; <%= Number(payment.updated_balance).toFixed(2) %></td>
+              </tr>
+            <% }) } else { %>
+              <tr><td colspan="4" class="text-center text-muted py-4">No payments yet.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

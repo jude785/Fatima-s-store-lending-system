@@ -1,0 +1,38 @@
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Loans</h1>
+    <p class="text-muted mb-0">Record and monitor lending transactions.</p>
+  </div>
+  <a href="/loans/create" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>New Loan</a>
+</div>
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>ID</th><th>Borrower</th><th>Loan Date</th><th>Due Date</th><th>Total</th><th>Balance</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% if (loans.length) { loans.forEach(loan => { %>
+        <tr>
+          <td>#<%= loan.loan_id %></td>
+          <td><%= loan.borrower_name %></td>
+          <td><%= moment(loan.loan_date).format('YYYY-MM-DD') %></td>
+          <td><%= moment(loan.due_date).format('YYYY-MM-DD') %></td>
+          <td>&#8369; <%= Number(loan.total_amount).toFixed(2) %></td>
+          <td>&#8369; <%= Number(loan.remaining_balance).toFixed(2) %></td>
+          <td><span class="badge text-bg-<%= loan.loan_status === 'Paid' ? 'success' : 'warning' %>"><%= loan.loan_status %></span></td>
+          <td>
+            <div class="d-flex justify-content-end gap-2">
+            <a href="/loans/<%= loan.loan_id %>" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i>View</a>
+            <a href="/loans/<%= loan.loan_id %>/edit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i>Edit</a>
+            <form action="/loans/<%= loan.loan_id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this loan and all related payments and receipts?');">
+              <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i>Delete</button>
+            </form>
+            </div>
+          </td>
+        </tr>
+        <% }) } else { %>
+        <tr><td colspan="8" class="text-center text-muted py-4">No loan records found.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

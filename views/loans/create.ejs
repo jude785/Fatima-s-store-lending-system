@@ -1,0 +1,27 @@
+<div class="mb-4">
+  <h1 class="h3 fw-bold mb-1">New Loan</h1>
+  <p class="text-muted mb-0">Create a new lending transaction.</p>
+</div>
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-4">
+    <form action="/loans" method="POST" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Borrower</label>
+        <select name="borrower_id" class="form-select" required>
+          <option value="">Select borrower</option>
+          <% borrowers.forEach(b => { %>
+            <option value="<%= b.borrower_id %>"><%= b.last_name %>, <%= b.first_name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3"><label class="form-label">Loan Date</label><input type="date" name="loan_date" class="form-control" required></div>
+      <div class="col-md-3"><label class="form-label">Due Date</label><input type="date" name="due_date" class="form-control" required></div>
+      <div class="col-md-4"><label class="form-label">Principal Amount</label><input type="number" min="0" step="0.01" name="principal_amount" class="form-control" required></div>
+      <div class="col-md-4"><label class="form-label">Interest Amount</label><input type="number" min="0" step="0.01" name="interest_amount" class="form-control" required></div>
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary"><i class="bi bi-check2-circle"></i>Save Loan</button>
+        <a href="/loans" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i>Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

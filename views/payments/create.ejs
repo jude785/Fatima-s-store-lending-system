@@ -1,0 +1,31 @@
+<div class="mb-4">
+  <h1 class="h3 fw-bold mb-1">Record Payment</h1>
+  <p class="text-muted mb-0">Save a borrower payment and auto-update the balance.</p>
+</div>
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-4">
+    <form action="/payments" method="POST" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Loan Record</label>
+        <select name="loan_id" class="form-select" required>
+          <option value="">Select active loan</option>
+          <% loans.forEach(loan => { %>
+            <option value="<%= loan.loan_id %>">Loan #<%= loan.loan_id %> - <%= loan.borrower_name %> (Balance: &#8369; <%= Number(loan.remaining_balance).toFixed(2) %>)</option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3"><label class="form-label">Payment Date</label><input type="date" name="payment_date" class="form-control" required></div>
+      <div class="col-md-3"><label class="form-label">Payment Type</label>
+        <select name="payment_type" class="form-select">
+          <option value="Partial">Partial</option>
+          <option value="Full">Full</option>
+        </select>
+      </div>
+      <div class="col-md-4"><label class="form-label">Payment Amount</label><input type="number" min="0.01" step="0.01" name="payment_amount" class="form-control" required></div>
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary"><i class="bi bi-check2-circle"></i>Save Payment</button>
+        <a href="/payments" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i>Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
