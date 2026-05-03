@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # FATIMA'S STORE Lending System
 
 A complete school-project web-based lending management system rebuilt using:
@@ -115,3 +116,6 @@ http://localhost:3000
 - Add chart dashboards
 - Add PDF export for reports and receipts
 - Add audit logs
+=======
+# Fatima-s-store-lending-system
+>>>>>>> ef630487d8c0cb21b88f0110a3a6f70e3d114169
