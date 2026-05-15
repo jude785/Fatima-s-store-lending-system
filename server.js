@@ -65,8 +65,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(verifyCsrfToken);
 app.use(refreshOverdueLoans);
+app.use(verifyCsrfToken);
 
 app.get('/', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');

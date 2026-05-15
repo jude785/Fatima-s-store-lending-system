@@ -19,13 +19,18 @@ function createLoginRateLimiter(options = {}) {
       return res.redirect('/login');
     }
 
+    // Track login attempt BEFORE processing
+    let attemptCounted = false;
+    
     res.on('finish', () => {
       if (req.loginSucceeded) {
         attempts.delete(key);
         return;
       }
 
-      if (res.statusCode < 400 && res.statusCode >= 300) {
+      // Only count failed login attempts once
+      if (!attemptCounted) {
+        attemptCounted = true;
         record.count += 1;
         attempts.set(key, record);
       }
