@@ -44,6 +44,11 @@ CREATE TABLE IF NOT EXISTS payments_table (
   payment_amount DECIMAL(10,2) NOT NULL,
   updated_balance DECIMAL(10,2) NOT NULL,
   payment_type VARCHAR(30) NOT NULL,
+  payment_method VARCHAR(30) NOT NULL DEFAULT 'Cash',
+  reference_number VARCHAR(100) NULL,
+  account_name VARCHAR(100) NULL,
+  account_number VARCHAR(50) NULL,
+  bank_name VARCHAR(100) NULL,
   encoded_by INT NOT NULL,
   CONSTRAINT fk_payments_loan FOREIGN KEY (loan_id) REFERENCES loans_table(loan_id)
     ON UPDATE CASCADE ON DELETE RESTRICT,

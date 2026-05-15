@@ -8,7 +8,7 @@
 <div class="card border-0 shadow-sm">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-      <thead class="table-light"><tr><th>ID</th><th>Borrower</th><th>Date</th><th>Amount</th><th>Balance</th><th>Type</th><th></th></tr></thead>
+      <thead class="table-light"><tr><th>ID</th><th>Borrower</th><th>Date</th><th>Amount</th><th>Balance</th><th>Type</th><th>Method</th><th></th></tr></thead>
       <tbody>
         <% if (payments.length) { payments.forEach(payment => { %>
           <tr>
@@ -19,6 +19,12 @@
             <td>&#8369; <%= Number(payment.updated_balance).toFixed(2) %></td>
             <td><span class="badge text-bg-primary"><%= payment.payment_type %></span></td>
             <td>
+              <span class="badge text-bg-secondary"><%= payment.payment_method || 'Cash' %></span>
+              <% if (payment.reference_number) { %>
+                <div class="small text-muted mt-1">Ref: <%= payment.reference_number %></div>
+              <% } %>
+            </td>
+            <td>
               <div class="d-flex justify-content-end gap-2">
                 <a href="/payments/<%= payment.payment_id %>/receipt" class="btn btn-sm btn-outline-primary"><i class="bi bi-receipt"></i>Receipt</a>
                 <form action="/payments/<%= payment.payment_id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this payment and its receipt? The loan balance will be recalculated.');">
@@ -28,7 +34,7 @@
             </td>
           </tr>
         <% }) } else { %>
-          <tr><td colspan="7" class="text-center text-muted py-4">No payment records found.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted py-4">No payment records found.</td></tr>
         <% } %>
       </tbody>
     </table>

@@ -1,13 +1,6 @@
-<<<<<<< HEAD
 # FATIMA'S STORE Lending System
 
-A complete school-project web-based lending management system rebuilt using:
-
-- **Frontend:** Bootstrap 5, EJS
-- **Backend:** Node.js, Express
-- **Database:** MySQL
-
-The system follows the provided case study and Chapter 3 structure: borrower registration, loan management, payment processing, receipt generation, balance tracking, and report generation.
+A web-based lending management system built with Node.js, Express, Bootstrap, EJS, and MySQL.
 
 ## Features
 
@@ -15,65 +8,33 @@ The system follows the provided case study and Chapter 3 structure: borrower reg
 - Borrower management
 - Loan entry, update, and monitoring
 - Payment recording with automatic balance updates
-- Printable payment receipt
-- Daily, weekly, monthly, yearly, collection, and outstanding balance reports
-- Database structure aligned with Chapter 3 tables:
-  - `users_table`
-  - `borrowers_table`
-  - `loans_table`
-  - `payments_table`
-  - `receipts_table`
-  - `reports_table`
+- Cash, GCash, and bank account payment tracking
+- Printable payment receipts
+- Lending and collection reports
 
-## Project Structure
+## Setup
 
-```
-fatimas-lending-system-node/
-  config/
-  controllers/
-  middleware/
-  public/
-  routes/
-  sql/
-  views/
-  server.js
-  package.json
-  .env.example
-```
-
-## Setup Instructions
-
-### 1. Install dependencies
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 2. Create environment file
+2. Copy `.env.example` to `.env` and update your MySQL credentials.
 
-Copy `.env.example` to `.env` and update the MySQL credentials.
-
-Example:
-
-```env
-PORT=3000
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=fatimas_lending_system
-DB_USER=root
-DB_PASSWORD=
-SESSION_SECRET=fatimas_store_secret_key
-```
-
-### 3. Create the database tables
-
-Run the SQL file in MySQL:
+3. Create the database tables:
 
 ```bash
 mysql -u root -p < sql/schema.sql
 ```
 
-### 4. Seed the default admin account
+4. Run migrations for existing databases:
+
+```bash
+npm run migrate
+```
+
+5. Seed the default admin account:
 
 ```bash
 npm run seed
@@ -81,41 +42,13 @@ npm run seed
 
 Default login:
 
-- **Username:** `admin`
-- **Password:** `admin123`
+- Username: `admin`
+- Password: `admin123`
 
-### 5. Start the application
-
-```bash
-npm run dev
-```
-
-or
+6. Start the application:
 
 ```bash
 npm start
 ```
 
-Then open:
-
-```text
-http://localhost:3000
-```
-
-## Notes
-
-- This project is designed as a strong school-project implementation.
-- It uses MySQL exactly as requested, so you need a running MySQL server before logging in.
-- Receipts and reports are printable from the browser.
-- Bootstrap is used for the full UI/UX styling.
-
-## Suggested Next Improvements
-
-- Add borrower delete/archive feature
-- Add role-based access control
-- Add chart dashboards
-- Add PDF export for reports and receipts
-- Add audit logs
-=======
-# Fatima-s-store-lending-system
->>>>>>> ef630487d8c0cb21b88f0110a3a6f70e3d114169
+Then open `http://localhost:3000`.

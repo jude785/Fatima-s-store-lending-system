@@ -21,7 +21,8 @@
       <div class="col-md-6">
         <p class="mb-1"><strong>Receipt No.:</strong> <%= payment.receipt_id %></p>
         <p class="mb-1"><strong>Payment ID:</strong> <%= payment.payment_id %></p>
-        <p class="mb-0"><strong>Date:</strong> <%= moment(payment.receipt_date).format('YYYY-MM-DD') %></p>
+        <p class="mb-1"><strong>Date:</strong> <%= moment(payment.receipt_date).format('YYYY-MM-DD') %></p>
+        <p class="mb-0"><strong>Method:</strong> <%= payment.payment_method || 'Cash' %></p>
       </div>
       <div class="col-md-6 text-md-end">
         <p class="mb-1"><strong>Borrower:</strong> <%= payment.borrower_name %></p>
@@ -35,7 +36,19 @@
           <tr><th width="40%">Loan Date</th><td><%= moment(payment.loan_date).format('YYYY-MM-DD') %></td></tr>
           <tr><th>Total Loan Amount</th><td>&#8369; <%= Number(payment.total_amount).toFixed(2) %></td></tr>
           <tr><th>Amount Paid</th><td>&#8369; <%= Number(payment.amount_paid).toFixed(2) %></td></tr>
-          <tr><th>Remaining Balance</th><td>&#8369; <%= Number(payment.remaining_balance).toFixed(2) %></td></tr>
+          <tr><th>Remaining Balance After Payment</th><td>&#8369; <%= Number(payment.receipt_balance).toFixed(2) %></td></tr>
+          <% if (payment.reference_number) { %>
+            <tr><th>Reference Number</th><td><%= payment.reference_number %></td></tr>
+          <% } %>
+          <% if (payment.account_name) { %>
+            <tr><th>Account Name</th><td><%= payment.account_name %></td></tr>
+          <% } %>
+          <% if (payment.account_number) { %>
+            <tr><th>Account / GCash Number</th><td><%= payment.account_number %></td></tr>
+          <% } %>
+          <% if (payment.bank_name) { %>
+            <tr><th>Bank Name</th><td><%= payment.bank_name %></td></tr>
+          <% } %>
           <tr><th>Remarks</th><td><%= payment.remarks %></td></tr>
         </tbody>
       </table>

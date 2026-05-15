@@ -1,4 +1,29 @@
 const pool = require('../config/db');
+const { recalculateLoanLedger } = require('../services/loanLedger');
+const { isDateRangeValid, resolveLoanStatus, roundMoney } = require('../utils/loanAccounting');
+
+const LOAN_STATUSES = ['Ongoing', 'Overdue', 'Paid'];
+
+function validateLoanAmounts(principalAmount, interestAmount) {
+  const principal = roundMoney(principalAmount);
+  const interest = roundMoney(interestAmount || 0);
+
+  if (!Number.isFinite(principal) || principal <= 0) {
+    throw new Error('Principal amount must be greater than zero.');
+  }
+
+  if (!Number.isFinite(interest) || interest < 0) {
+    throw new Error('Interest amount cannot be negative.');
+  }
+
+  return { principal, interest, total: roundMoney(principal + interest) };
+}
+
+function validateLoanDates(loanDate, dueDate) {
+  if (!loanDate || !dueDate || !isDateRangeValid(loanDate, dueDate)) {
+    throw new Error('Due date must be the same as or later than the loan date.');
+  }
+}
 
 exports.index = async (req, res) => {
   const [loans] = await pool.query(
@@ -18,20 +43,34 @@ exports.createForm = async (req, res) => {
 };
 
 exports.store = async (req, res) => {
-  const { borrower_id, loan_date, due_date, principal_amount, interest_amount } = req.body;
-  const principal = Number(principal_amount || 0);
-  const interest = Number(interest_amount || 0);
-  const total = principal + interest;
+  try {
+    const { borrower_id, loan_date, due_date, principal_amount, interest_amount } = req.body;
+    validateLoanDates(loan_date, due_date);
+    const { principal, interest, total } = validateLoanAmounts(principal_amount, interest_amount);
 
-  await pool.query(
-    `INSERT INTO loans_table
-     (borrower_id, loan_date, due_date, principal_amount, interest_amount, total_amount, remaining_balance, loan_status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'Ongoing')`,
-    [borrower_id, loan_date, due_date, principal, interest, total, total]
-  );
+    const [[borrower]] = await pool.query(
+      "SELECT borrower_id FROM borrowers_table WHERE borrower_id = ? AND borrower_status = 'Active'",
+      [borrower_id]
+    );
 
-  req.flash('success', 'Loan recorded successfully.');
-  res.redirect('/loans');
+    if (!borrower) {
+      throw new Error('Please select an active borrower.');
+    }
+
+    await pool.query(
+      `INSERT INTO loans_table
+       (borrower_id, loan_date, due_date, principal_amount, interest_amount, total_amount, remaining_balance, loan_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [borrower_id, loan_date, due_date, principal, interest, total, total, resolveLoanStatus(total, due_date)]
+    );
+
+    req.flash('success', 'Loan recorded successfully.');
+    return res.redirect('/loans');
+  } catch (error) {
+    console.error(error);
+    req.flash('error', error.message || 'Unable to record loan.');
+    return res.redirect('/loans/create');
+  }
 };
 
 exports.show = async (req, res) => {
@@ -67,24 +106,89 @@ exports.editForm = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const { borrower_id, loan_date, due_date, principal_amount, interest_amount, loan_status } = req.body;
-  const principal = Number(principal_amount || 0);
-  const interest = Number(interest_amount || 0);
-  const total = principal + interest;
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
 
-  const [[existing]] = await pool.query('SELECT remaining_balance FROM loans_table WHERE loan_id = ?', [req.params.id]);
-  const remaining = Math.min(Number(existing?.remaining_balance || total), total);
+    const { borrower_id, loan_date, due_date, principal_amount, interest_amount, loan_status } = req.body;
+    validateLoanDates(loan_date, due_date);
 
-  await pool.query(
-    `UPDATE loans_table
-     SET borrower_id = ?, loan_date = ?, due_date = ?, principal_amount = ?, interest_amount = ?,
-         total_amount = ?, remaining_balance = ?, loan_status = ?
-     WHERE loan_id = ?`,
-    [borrower_id, loan_date, due_date, principal, interest, total, remaining, loan_status, req.params.id]
-  );
+    if (!LOAN_STATUSES.includes(loan_status)) {
+      throw new Error('Invalid loan status selected.');
+    }
 
-  req.flash('success', 'Loan updated successfully.');
-  res.redirect('/loans');
+    const { principal, interest, total } = validateLoanAmounts(principal_amount, interest_amount);
+
+    const [[existing]] = await connection.query(
+      'SELECT * FROM loans_table WHERE loan_id = ? FOR UPDATE',
+      [req.params.id]
+    );
+
+    if (!existing) {
+      throw new Error('Loan record not found.');
+    }
+
+    const [[borrower]] = await connection.query(
+      'SELECT borrower_id FROM borrowers_table WHERE borrower_id = ?',
+      [borrower_id]
+    );
+
+    if (!borrower) {
+      throw new Error('Selected borrower does not exist.');
+    }
+
+    const [existingPayments] = await connection.query(
+      'SELECT payment_amount FROM payments_table WHERE loan_id = ? FOR UPDATE',
+      [req.params.id]
+    );
+
+    const totalPaid = roundMoney(
+      existingPayments.reduce((sum, payment) => sum + Number(payment.payment_amount), 0)
+    );
+    if (totalPaid > total) {
+      throw new Error(`Loan total cannot be lower than payments already recorded (PHP ${totalPaid.toFixed(2)}).`);
+    }
+
+    if (loan_status === 'Paid' && totalPaid < total) {
+      throw new Error('A loan can only be marked paid when recorded payments cover the full loan total.');
+    }
+
+    await connection.query(
+      `UPDATE loans_table
+       SET borrower_id = ?, loan_date = ?, due_date = ?, principal_amount = ?, interest_amount = ?,
+           total_amount = ?
+       WHERE loan_id = ?`,
+      [borrower_id, loan_date, due_date, principal, interest, total, req.params.id]
+    );
+
+    if (Number(existing.borrower_id) !== Number(borrower_id)) {
+      await connection.query('UPDATE payments_table SET borrower_id = ? WHERE loan_id = ?', [borrower_id, req.params.id]);
+      await connection.query(
+        `UPDATE receipts_table r
+         JOIN payments_table p ON p.payment_id = r.payment_id
+         SET r.borrower_id = ?
+         WHERE p.loan_id = ?`,
+        [borrower_id, req.params.id]
+      );
+    }
+
+    await recalculateLoanLedger(
+      connection,
+      { loan_id: req.params.id, total_amount: total, due_date, loan_status },
+      loan_status
+    );
+
+    await connection.commit();
+    req.flash('success', 'Loan updated successfully.');
+    return res.redirect('/loans');
+  } catch (error) {
+    await connection.rollback();
+    console.error(error);
+    req.flash('error', error.message || 'Unable to update loan.');
+    return res.redirect(`/loans/${req.params.id}/edit`);
+  } finally {
+    connection.release();
+  }
 };
 
 exports.destroy = async (req, res) => {

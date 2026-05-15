@@ -69,7 +69,7 @@
   <div class="card-header bg-white"><h2 class="h5 mb-0">Payment Transactions</h2></div>
   <div class="table-responsive">
     <table class="table table-sm mb-0 align-middle">
-      <thead class="table-light"><tr><th>Payment ID</th><th>Borrower</th><th>Date</th><th>Amount</th><th>Updated Balance</th></tr></thead>
+      <thead class="table-light"><tr><th>Payment ID</th><th>Borrower</th><th>Date</th><th>Amount</th><th>Updated Balance</th><th>Method</th></tr></thead>
       <tbody>
         <% if (paymentRows.length) { paymentRows.forEach(row => { %>
           <tr>
@@ -78,9 +78,10 @@
             <td><%= moment(row.payment_date).format('YYYY-MM-DD') %></td>
             <td>&#8369; <%= Number(row.payment_amount).toFixed(2) %></td>
             <td>&#8369; <%= Number(row.updated_balance).toFixed(2) %></td>
+            <td><span class="badge text-bg-secondary"><%= row.payment_method || 'Cash' %></span></td>
           </tr>
         <% }) } else { %>
-          <tr><td colspan="5" class="text-center text-muted py-3">No payment records for the selected period.</td></tr>
+          <tr><td colspan="6" class="text-center text-muted py-3">No payment records for the selected period.</td></tr>
         <% } %>
       </tbody>
     </table>

@@ -7,21 +7,45 @@
     <form action="/payments" method="POST" class="row g-3">
       <div class="col-md-6">
         <label class="form-label">Loan Record</label>
-        <select name="loan_id" class="form-select" required>
+        <select name="loan_id" id="loanSelect" class="form-select" required>
           <option value="">Select active loan</option>
           <% loans.forEach(loan => { %>
-            <option value="<%= loan.loan_id %>">Loan #<%= loan.loan_id %> - <%= loan.borrower_name %> (Balance: &#8369; <%= Number(loan.remaining_balance).toFixed(2) %>)</option>
+            <option value="<%= loan.loan_id %>" data-balance="<%= Number(loan.remaining_balance).toFixed(2) %>">Loan #<%= loan.loan_id %> - <%= loan.borrower_name %> (Balance: &#8369; <%= Number(loan.remaining_balance).toFixed(2) %>)</option>
           <% }) %>
         </select>
       </div>
       <div class="col-md-3"><label class="form-label">Payment Date</label><input type="date" name="payment_date" class="form-control" required></div>
       <div class="col-md-3"><label class="form-label">Payment Type</label>
-        <select name="payment_type" class="form-select">
+        <select name="payment_type" id="paymentType" class="form-select">
           <option value="Partial">Partial</option>
           <option value="Full">Full</option>
         </select>
       </div>
-      <div class="col-md-4"><label class="form-label">Payment Amount</label><input type="number" min="0.01" step="0.01" name="payment_amount" class="form-control" required></div>
+      <div class="col-md-4"><label class="form-label">Payment Amount</label><input type="number" min="0.01" step="0.01" name="payment_amount" id="paymentAmount" class="form-control" required></div>
+      <div class="col-md-4">
+        <label class="form-label">Payment Method</label>
+        <select name="payment_method" id="paymentMethod" class="form-select" required>
+          <% paymentMethods.forEach(method => { %>
+            <option value="<%= method %>"><%= method === 'Bank Transfer' ? 'Bank Account' : method %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-4 d-none" data-payment-detail="GCash,Bank Transfer">
+        <label class="form-label">Reference Number</label>
+        <input name="reference_number" class="form-control" data-required-for-method="true" placeholder="Transaction reference">
+      </div>
+      <div class="col-md-4 d-none" data-payment-detail="GCash,Bank Transfer">
+        <label class="form-label">Account Name</label>
+        <input name="account_name" class="form-control" data-required-for-method="true" placeholder="Sender account name">
+      </div>
+      <div class="col-md-4 d-none" data-payment-detail="GCash,Bank Transfer">
+        <label class="form-label">Account / GCash Number</label>
+        <input name="account_number" class="form-control" data-required-for-method="true" placeholder="Mobile or account number">
+      </div>
+      <div class="col-md-4 d-none" data-payment-detail="Bank Transfer">
+        <label class="form-label">Bank Name</label>
+        <input name="bank_name" class="form-control" data-required-for-method="true" placeholder="Bank name">
+      </div>
       <div class="col-12 d-flex gap-2">
         <button class="btn btn-primary"><i class="bi bi-check2-circle"></i>Save Payment</button>
         <a href="/payments" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i>Cancel</a>
@@ -29,3 +53,42 @@
     </form>
   </div>
 </div>
+
+<script>
+  (() => {
+    const methodSelect = document.getElementById('paymentMethod');
+    const loanSelect = document.getElementById('loanSelect');
+    const paymentAmount = document.getElementById('paymentAmount');
+    const paymentType = document.getElementById('paymentType');
+    const detailGroups = document.querySelectorAll('[data-payment-detail]');
+
+    function syncPaymentDetails() {
+      const selectedMethod = methodSelect.value;
+      detailGroups.forEach((group) => {
+        const supportedMethods = group.dataset.paymentDetail.split(',');
+        const isVisible = supportedMethods.includes(selectedMethod);
+        group.classList.toggle('d-none', !isVisible);
+
+        group.querySelectorAll('input').forEach((input) => {
+          input.required = isVisible && input.dataset.requiredForMethod === 'true';
+          if (!isVisible) input.value = '';
+        });
+      });
+    }
+
+    function syncMaxPayment() {
+      const selectedOption = loanSelect.options[loanSelect.selectedIndex];
+      const balance = selectedOption ? selectedOption.dataset.balance : '';
+      if (balance) {
+        paymentAmount.max = balance;
+        if (paymentType.value === 'Full') paymentAmount.value = balance;
+      }
+    }
+
+    methodSelect.addEventListener('change', syncPaymentDetails);
+    loanSelect.addEventListener('change', syncMaxPayment);
+    paymentType.addEventListener('change', syncMaxPayment);
+    syncPaymentDetails();
+    syncMaxPayment();
+  })();
+</script>
