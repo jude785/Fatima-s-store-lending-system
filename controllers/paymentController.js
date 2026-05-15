@@ -179,7 +179,7 @@ exports.store = async (req, res) => {
         payment_date,
         loan.borrower_id,
         amount,
-        buildReceiptRemarks(paymentType, paymentDetails.paymentMethod, paymentDetails.referenceNumber)
+        buildReceiptRemarks(finalPaymentType, paymentDetails.paymentMethod, paymentDetails.referenceNumber)
       ]
     );
 
