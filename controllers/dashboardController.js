@@ -4,6 +4,7 @@ exports.index = async (req, res) => {
   try {
     const [[borrowers]] = await pool.query('SELECT COUNT(*) AS total FROM borrowers_table');
     const [[activeLoans]] = await pool.query("SELECT COUNT(*) AS total FROM loans_table WHERE loan_status IN ('Ongoing','Overdue')");
+    const [[overdueLoans]] = await pool.query("SELECT COUNT(*) AS total FROM loans_table WHERE loan_status = 'Overdue'");
     const [[collections]] = await pool.query('SELECT COALESCE(SUM(payment_amount),0) AS total FROM payments_table');
     const [[balances]] = await pool.query('SELECT COALESCE(SUM(remaining_balance),0) AS total FROM loans_table WHERE loan_status IN (\'Ongoing\', \'Overdue\')');
 
@@ -30,6 +31,7 @@ exports.index = async (req, res) => {
       stats: {
         borrowers: borrowers.total,
         activeLoans: activeLoans.total,
+        overdueLoans: overdueLoans.total,
         collections: collections.total,
         balances: balances.total
       },
@@ -41,7 +43,7 @@ exports.index = async (req, res) => {
     req.flash('error', 'Unable to load dashboard.');
     res.render('dashboard/index', {
       title: 'Dashboard',
-      stats: { borrowers: 0, activeLoans: 0, collections: 0, balances: 0 },
+      stats: { borrowers: 0, activeLoans: 0, overdueLoans: 0, collections: 0, balances: 0 },
       recentLoans: [],
       recentPayments: []
     });

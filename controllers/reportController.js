@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { recordAudit } = require('../services/auditLogger');
 const { isDateRangeValid } = require('../utils/loanAccounting');
 
 async function saveReport(reportType, dateFrom, dateTo, totals, generatedBy) {
@@ -28,6 +29,11 @@ function getReportFilters(query) {
   }
 
   return { reportType, dateFrom, dateTo };
+}
+
+function csvEscape(value) {
+  const text = String(value ?? '');
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 exports.index = async (req, res) => {
@@ -116,11 +122,56 @@ exports.storeSummary = async (req, res) => {
       },
       req.session.user.user_id
     );
+    await recordAudit(req, 'REPORT_SUMMARY_SAVED', 'report', null, {
+      reportType: report_type,
+      dateFrom: date_from,
+      dateTo: date_to
+    });
     req.flash('success', 'Report summary saved to database.');
     return res.redirect(`/reports?report_type=${encodeURIComponent(report_type)}&date_from=${date_from}&date_to=${date_to}`);
   } catch (error) {
     console.error(error);
     req.flash('error', error.message || 'Unable to save report summary.');
+    return res.redirect('/reports');
+  }
+};
+
+exports.exportCsv = async (req, res) => {
+  try {
+    const filters = getReportFilters(req.query);
+    const [paymentRows] = await pool.query(
+      `SELECT p.payment_id, p.payment_date, p.payment_amount, p.updated_balance,
+              p.payment_type, p.payment_method, p.reference_number,
+              CONCAT(b.first_name, ' ', b.last_name) AS borrower_name
+       FROM payments_table p
+       JOIN borrowers_table b ON b.borrower_id = p.borrower_id
+       WHERE p.payment_date BETWEEN ? AND ?
+       ORDER BY p.payment_date DESC, p.payment_id DESC`,
+      [filters.dateFrom, filters.dateTo]
+    );
+
+    const rows = [
+      ['Payment ID', 'Borrower', 'Date', 'Amount', 'Updated Balance', 'Type', 'Method', 'Reference'],
+      ...paymentRows.map((row) => [
+        row.payment_id,
+        row.borrower_name,
+        row.payment_date,
+        Number(row.payment_amount).toFixed(2),
+        Number(row.updated_balance).toFixed(2),
+        row.payment_type,
+        row.payment_method || 'Cash',
+        row.reference_number || ''
+      ])
+    ];
+
+    await recordAudit(req, 'REPORT_EXPORTED_CSV', 'report', null, filters);
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="collections-${filters.dateFrom}-to-${filters.dateTo}.csv"`);
+    return res.send(rows.map((row) => row.map(csvEscape).join(',')).join('\r\n'));
+  } catch (error) {
+    console.error(error);
+    req.flash('error', error.message || 'Unable to export report.');
     return res.redirect('/reports');
   }
 };

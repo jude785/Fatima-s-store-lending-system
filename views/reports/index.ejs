@@ -20,6 +20,7 @@
       <div class="col-md-3"><label class="form-label">Date To</label><input type="date" name="date_to" class="form-control" value="<%= filters.dateTo %>"></div>
       <div class="col-md-3 d-flex gap-2">
         <button class="btn btn-primary"><i class="bi bi-funnel"></i>Generate</button>
+        <a class="btn btn-outline-primary" href="/reports/export.csv?report_type=<%= encodeURIComponent(filters.reportType) %>&date_from=<%= filters.dateFrom %>&date_to=<%= filters.dateTo %>"><i class="bi bi-filetype-csv"></i>CSV</a>
         <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i>Print</button>
       </div>
     </form>
@@ -33,6 +34,7 @@
 </div>
 
 <form action="/reports/save-summary" method="POST" class="mb-4">
+  <%- csrfField %>
   <input type="hidden" name="report_type" value="<%= filters.reportType %>">
   <input type="hidden" name="date_from" value="<%= filters.dateFrom %>">
   <input type="hidden" name="date_to" value="<%= filters.dateTo %>">

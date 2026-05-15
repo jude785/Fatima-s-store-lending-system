@@ -5,6 +5,7 @@
 <div class="card border-0 shadow-sm">
   <div class="card-body p-4">
     <form action="/borrowers" method="POST" class="row g-3">
+      <%- csrfField %>
       <div class="col-md-4"><label class="form-label">First Name</label><input name="first_name" class="form-control" required></div>
       <div class="col-md-4"><label class="form-label">Middle Name</label><input name="middle_name" class="form-control"></div>
       <div class="col-md-4"><label class="form-label">Last Name</label><input name="last_name" class="form-control" required></div>
@@ -16,6 +17,14 @@
           <option value="Inactive">Inactive</option>
         </select>
       </div>
+      <div class="col-md-3"><label class="form-label">Risk Status</label>
+        <select name="risk_status" class="form-select">
+          <option value="Clear">Clear</option>
+          <option value="Warning">Warning</option>
+          <option value="Blacklisted">Blacklisted</option>
+        </select>
+      </div>
+      <div class="col-md-9"><label class="form-label">Warning Note</label><input name="warning_note" class="form-control" placeholder="Optional borrower risk note"></div>
       <div class="col-12 d-flex gap-2">
         <button class="btn btn-primary"><i class="bi bi-check2-circle"></i>Save Borrower</button>
         <a href="/borrowers" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i>Cancel</a>

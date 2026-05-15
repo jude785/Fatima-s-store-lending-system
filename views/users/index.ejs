@@ -1,0 +1,40 @@
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Users</h1>
+    <p class="text-muted mb-0">Manage staff access and administrator accounts.</p>
+  </div>
+  <a href="/users/create" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Create User</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>ID</th><th>Username</th><th>Full Name</th><th>Role</th><th>Status</th><th>Created</th><th></th></tr></thead>
+      <tbody>
+        <% if (users.length) { users.forEach(user => { %>
+          <tr>
+            <td>#<%= user.user_id %></td>
+            <td><%= user.username %></td>
+            <td><%= user.full_name %></td>
+            <td><span class="badge text-bg-primary"><%= user.role %></span></td>
+            <td><span class="badge text-bg-<%= user.status ? 'success' : 'secondary' %>"><%= user.status ? 'Active' : 'Inactive' %></span></td>
+            <td><%= moment(user.created_at).format('YYYY-MM-DD') %></td>
+            <td>
+              <div class="d-flex justify-content-end gap-2">
+                <a href="/users/<%= user.user_id %>/edit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i>Edit</a>
+                <% if (Number(user.user_id) !== Number(currentUser.user_id) && user.status) { %>
+                  <form action="/users/<%= user.user_id %>?_method=DELETE" method="POST" onsubmit="return confirm('Deactivate this user account?');">
+                    <%- csrfField %>
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-person-x"></i>Deactivate</button>
+                  </form>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+        <% }) } else { %>
+          <tr><td colspan="7" class="text-center text-muted py-4">No user accounts found.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -6,6 +6,7 @@
   <div class="d-flex gap-2">
     <a href="/borrowers/<%= borrower.borrower_id %>/edit" class="btn btn-outline-primary"><i class="bi bi-pencil"></i>Edit Record</a>
     <form action="/borrowers/<%= borrower.borrower_id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this borrower and all related loans, payments, and receipts?');">
+      <%- csrfField %>
       <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash"></i>Delete Borrower</button>
     </form>
   </div>
@@ -19,6 +20,10 @@
       <p class="mb-2"><strong>Address:</strong> <%= borrower.address %></p>
       <p class="mb-2"><strong>Contact:</strong> <%= borrower.contact_number %></p>
       <p class="mb-2"><strong>Status:</strong> <%= borrower.borrower_status %></p>
+      <p class="mb-2"><strong>Risk:</strong> <%= borrower.risk_status || 'Clear' %></p>
+      <% if (borrower.warning_note) { %>
+        <p class="mb-2"><strong>Note:</strong> <%= borrower.warning_note %></p>
+      <% } %>
       <p class="mb-0"><strong>Date Registered:</strong> <%= moment(borrower.date_registered).format('YYYY-MM-DD') %></p>
     </div></div>
   </div>
@@ -38,6 +43,7 @@
               <td><span class="badge text-bg-<%= loan.loan_status === 'Paid' ? 'success' : 'warning' %>"><%= loan.loan_status %></span></td>
               <td class="text-end">
                 <form action="/loans/<%= loan.loan_id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this loan and all related payments and receipts?');">
+                  <%- csrfField %>
                   <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i>Delete</button>
                 </form>
               </td>
@@ -68,6 +74,7 @@
             <td><span class="badge text-bg-secondary"><%= payment.payment_method || 'Cash' %></span></td>
             <td class="text-end">
               <form action="/payments/<%= payment.payment_id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this payment and its receipt? The loan balance will be recalculated.');">
+                <%- csrfField %>
                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i>Delete</button>
               </form>
             </td>

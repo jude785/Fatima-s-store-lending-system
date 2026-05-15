@@ -1,10 +1,17 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
+const { validatePasswordStrength } = require('../utils/passwordPolicy');
 
 async function seedAdmin() {
   try {
-    const passwordHash = await bcrypt.hash('admin123', 10);
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword) {
+      throw new Error('Set ADMIN_PASSWORD in your .env file before running npm run seed.');
+    }
+    validatePasswordStrength(adminPassword);
+
+    const passwordHash = await bcrypt.hash(adminPassword, 12);
     await pool.query(
       `INSERT INTO users_table (username, password, full_name, role, status)
        VALUES (?, ?, ?, ?, ?)

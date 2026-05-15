@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { recalculateLoanLedger } = require('../services/loanLedger');
+const { recordAudit } = require('../services/auditLogger');
 const { resolveLoanStatus, roundMoney } = require('../utils/loanAccounting');
 
 const PAYMENT_METHODS = ['Cash', 'GCash', 'Bank Transfer'];
@@ -167,6 +168,11 @@ exports.store = async (req, res) => {
     );
 
     await connection.commit();
+    await recordAudit(req, 'PAYMENT_RECORDED', 'payment', paymentResult.insertId, {
+      loanId: loan.loan_id,
+      amount,
+      paymentMethod: paymentDetails.paymentMethod
+    });
     req.flash('success', 'Payment recorded successfully.');
     return res.redirect(`/payments/${paymentResult.insertId}/receipt?receipt_id=${receiptResult.insertId}`);
   } catch (error) {
@@ -227,6 +233,9 @@ exports.destroy = async (req, res) => {
     await recalculateLoanLedger(connection, payment);
 
     await connection.commit();
+    await recordAudit(req, 'PAYMENT_DELETED', 'payment', req.params.id, {
+      loanId: payment.loan_id
+    });
     req.flash('success', 'Payment and receipt deleted successfully.');
     return res.redirect('/payments');
   } catch (error) {

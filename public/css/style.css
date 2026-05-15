@@ -529,6 +529,11 @@ b {
   color: var(--warning) !important;
 }
 
+.text-bg-danger {
+  background: var(--danger-soft) !important;
+  color: var(--danger) !important;
+}
+
 .alert {
   border: 1px solid transparent;
   border-radius: var(--radius);

@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS borrowers_table (
   address VARCHAR(150) NOT NULL,
   contact_number VARCHAR(20) NOT NULL,
   borrower_status VARCHAR(20) NOT NULL DEFAULT 'Active',
+  risk_status VARCHAR(20) NOT NULL DEFAULT 'Clear',
+  warning_note TEXT NULL,
   date_registered DATE NOT NULL
 );
 
@@ -83,4 +85,20 @@ CREATE TABLE IF NOT EXISTS reports_table (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_reports_user FOREIGN KEY (generated_by) REFERENCES users_table(user_id)
     ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs_table (
+  audit_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  action VARCHAR(80) NOT NULL,
+  entity_type VARCHAR(80) NOT NULL,
+  entity_id INT NULL,
+  details TEXT NULL,
+  ip_address VARCHAR(45) NULL,
+  user_agent VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_audit_entity (entity_type, entity_id),
+  INDEX idx_audit_created_at (created_at),
+  CONSTRAINT fk_audit_user FOREIGN KEY (user_id) REFERENCES users_table(user_id)
+    ON UPDATE CASCADE ON DELETE SET NULL
 );

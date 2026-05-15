@@ -5,6 +5,7 @@
 <div class="card border-0 shadow-sm">
   <div class="card-body p-4">
     <form action="/borrowers/<%= borrower.borrower_id %>?_method=PUT" method="POST" class="row g-3">
+      <%- csrfField %>
       <div class="col-md-4"><label class="form-label">First Name</label><input name="first_name" class="form-control" value="<%= borrower.first_name %>" required></div>
       <div class="col-md-4"><label class="form-label">Middle Name</label><input name="middle_name" class="form-control" value="<%= borrower.middle_name %>"></div>
       <div class="col-md-4"><label class="form-label">Last Name</label><input name="last_name" class="form-control" value="<%= borrower.last_name %>" required></div>
@@ -16,6 +17,14 @@
           <option value="Inactive" <%= borrower.borrower_status === 'Inactive' ? 'selected' : '' %>>Inactive</option>
         </select>
       </div>
+      <div class="col-md-3"><label class="form-label">Risk Status</label>
+        <select name="risk_status" class="form-select">
+          <option value="Clear" <%= borrower.risk_status === 'Clear' ? 'selected' : '' %>>Clear</option>
+          <option value="Warning" <%= borrower.risk_status === 'Warning' ? 'selected' : '' %>>Warning</option>
+          <option value="Blacklisted" <%= borrower.risk_status === 'Blacklisted' ? 'selected' : '' %>>Blacklisted</option>
+        </select>
+      </div>
+      <div class="col-md-9"><label class="form-label">Warning Note</label><input name="warning_note" class="form-control" value="<%= borrower.warning_note || '' %>" placeholder="Optional borrower risk note"></div>
       <div class="col-12 d-flex gap-2">
         <button class="btn btn-primary"><i class="bi bi-check2-circle"></i>Update Borrower</button>
         <a href="/borrowers" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i>Cancel</a>

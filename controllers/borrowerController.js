@@ -1,6 +1,8 @@
 const pool = require('../config/db');
+const { recordAudit } = require('../services/auditLogger');
 
 const BORROWER_STATUSES = ['Active', 'Inactive'];
+const RISK_STATUSES = ['Clear', 'Warning', 'Blacklisted'];
 
 function cleanRequired(value, label) {
   const text = String(value || '').trim();
@@ -19,13 +21,20 @@ function validateBorrowerPayload(body) {
     throw new Error('Invalid borrower status selected.');
   }
 
+  const riskStatus = cleanRequired(body.risk_status || 'Clear', 'Risk status');
+  if (!RISK_STATUSES.includes(riskStatus)) {
+    throw new Error('Invalid borrower risk status selected.');
+  }
+
   return {
     firstName: cleanRequired(body.first_name, 'First name'),
     middleName: cleanOptional(body.middle_name),
     lastName: cleanRequired(body.last_name, 'Last name'),
     address: cleanRequired(body.address, 'Address'),
     contactNumber: cleanRequired(body.contact_number, 'Contact number'),
-    borrowerStatus
+    borrowerStatus,
+    riskStatus,
+    warningNote: cleanOptional(body.warning_note)
   };
 }
 
@@ -49,19 +58,25 @@ exports.createForm = (req, res) => {
 exports.store = async (req, res) => {
   try {
     const borrower = validateBorrowerPayload(req.body);
-    await pool.query(
+    const [result] = await pool.query(
       `INSERT INTO borrowers_table
-       (first_name, middle_name, last_name, address, contact_number, borrower_status, date_registered)
-       VALUES (?, ?, ?, ?, ?, ?, CURDATE())`,
+       (first_name, middle_name, last_name, address, contact_number, borrower_status, risk_status, warning_note, date_registered)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE())`,
       [
         borrower.firstName,
         borrower.middleName,
         borrower.lastName,
         borrower.address,
         borrower.contactNumber,
-        borrower.borrowerStatus
+        borrower.borrowerStatus,
+        borrower.riskStatus,
+        borrower.warningNote
       ]
     );
+    await recordAudit(req, 'BORROWER_CREATED', 'borrower', result.insertId, {
+      name: `${borrower.firstName} ${borrower.lastName}`,
+      riskStatus: borrower.riskStatus
+    });
     req.flash('success', 'Borrower added successfully.');
     return res.redirect('/borrowers');
   } catch (error) {
@@ -85,7 +100,8 @@ exports.update = async (req, res) => {
     const borrower = validateBorrowerPayload(req.body);
     const [result] = await pool.query(
       `UPDATE borrowers_table
-       SET first_name = ?, middle_name = ?, last_name = ?, address = ?, contact_number = ?, borrower_status = ?
+       SET first_name = ?, middle_name = ?, last_name = ?, address = ?, contact_number = ?,
+           borrower_status = ?, risk_status = ?, warning_note = ?
        WHERE borrower_id = ?`,
       [
         borrower.firstName,
@@ -94,6 +110,8 @@ exports.update = async (req, res) => {
         borrower.address,
         borrower.contactNumber,
         borrower.borrowerStatus,
+        borrower.riskStatus,
+        borrower.warningNote,
         req.params.id
       ]
     );
@@ -103,6 +121,9 @@ exports.update = async (req, res) => {
       return res.redirect('/borrowers');
     }
 
+    await recordAudit(req, 'BORROWER_UPDATED', 'borrower', req.params.id, {
+      riskStatus: borrower.riskStatus
+    });
     req.flash('success', 'Borrower updated successfully.');
     return res.redirect('/borrowers');
   } catch (error) {
@@ -158,6 +179,7 @@ exports.destroy = async (req, res) => {
     await connection.query('DELETE FROM borrowers_table WHERE borrower_id = ?', [req.params.id]);
 
     await connection.commit();
+    await recordAudit(req, 'BORROWER_DELETED', 'borrower', req.params.id);
     req.flash('success', 'Borrower and related records deleted successfully.');
     return res.redirect('/borrowers');
   } catch (error) {

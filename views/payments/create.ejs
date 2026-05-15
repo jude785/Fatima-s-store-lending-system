@@ -5,6 +5,7 @@
 <div class="card border-0 shadow-sm">
   <div class="card-body p-4">
     <form action="/payments" method="POST" class="row g-3">
+      <%- csrfField %>
       <div class="col-md-6">
         <label class="form-label">Loan Record</label>
         <select name="loan_id" id="loanSelect" class="form-select" required>

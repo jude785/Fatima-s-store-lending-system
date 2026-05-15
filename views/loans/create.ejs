@@ -5,12 +5,13 @@
 <div class="card border-0 shadow-sm">
   <div class="card-body p-4">
     <form action="/loans" method="POST" class="row g-3">
+      <%- csrfField %>
       <div class="col-md-6">
         <label class="form-label">Borrower</label>
         <select name="borrower_id" class="form-select" required>
           <option value="">Select borrower</option>
           <% borrowers.forEach(b => { %>
-            <option value="<%= b.borrower_id %>"><%= b.last_name %>, <%= b.first_name %></option>
+            <option value="<%= b.borrower_id %>"><%= b.last_name %>, <%= b.first_name %><%= b.risk_status && b.risk_status !== 'Clear' ? ` (${b.risk_status})` : '' %></option>
           <% }) %>
         </select>
       </div>

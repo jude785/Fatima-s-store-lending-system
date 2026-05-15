@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { recalculateLoanLedger } = require('../services/loanLedger');
+const { recordAudit } = require('../services/auditLogger');
 const { isDateRangeValid, resolveLoanStatus, roundMoney } = require('../utils/loanAccounting');
 
 const LOAN_STATUSES = ['Ongoing', 'Overdue', 'Paid'];
@@ -37,7 +38,7 @@ exports.index = async (req, res) => {
 
 exports.createForm = async (req, res) => {
   const [borrowers] = await pool.query(
-    "SELECT borrower_id, first_name, last_name FROM borrowers_table WHERE borrower_status = 'Active' ORDER BY last_name ASC"
+    "SELECT borrower_id, first_name, last_name, risk_status FROM borrowers_table WHERE borrower_status = 'Active' ORDER BY last_name ASC"
   );
   res.render('loans/create', { title: 'New Loan', borrowers });
 };
@@ -49,7 +50,7 @@ exports.store = async (req, res) => {
     const { principal, interest, total } = validateLoanAmounts(principal_amount, interest_amount);
 
     const [[borrower]] = await pool.query(
-      "SELECT borrower_id FROM borrowers_table WHERE borrower_id = ? AND borrower_status = 'Active'",
+      "SELECT borrower_id, risk_status FROM borrowers_table WHERE borrower_id = ? AND borrower_status = 'Active'",
       [borrower_id]
     );
 
@@ -57,13 +58,21 @@ exports.store = async (req, res) => {
       throw new Error('Please select an active borrower.');
     }
 
-    await pool.query(
+    if (borrower.risk_status === 'Blacklisted') {
+      throw new Error('Blacklisted borrowers cannot receive new loans.');
+    }
+
+    const [result] = await pool.query(
       `INSERT INTO loans_table
        (borrower_id, loan_date, due_date, principal_amount, interest_amount, total_amount, remaining_balance, loan_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [borrower_id, loan_date, due_date, principal, interest, total, total, resolveLoanStatus(total, due_date)]
     );
 
+    await recordAudit(req, 'LOAN_CREATED', 'loan', result.insertId, {
+      borrowerId: borrower_id,
+      total
+    });
     req.flash('success', 'Loan recorded successfully.');
     return res.redirect('/loans');
   } catch (error) {
@@ -179,6 +188,10 @@ exports.update = async (req, res) => {
     );
 
     await connection.commit();
+    await recordAudit(req, 'LOAN_UPDATED', 'loan', req.params.id, {
+      borrowerId: borrower_id,
+      total
+    });
     req.flash('success', 'Loan updated successfully.');
     return res.redirect('/loans');
   } catch (error) {
@@ -217,6 +230,7 @@ exports.destroy = async (req, res) => {
     await connection.query('DELETE FROM loans_table WHERE loan_id = ?', [req.params.id]);
 
     await connection.commit();
+    await recordAudit(req, 'LOAN_DELETED', 'loan', req.params.id);
     req.flash('success', 'Loan and related payment records deleted successfully.');
     return res.redirect('/loans');
   } catch (error) {

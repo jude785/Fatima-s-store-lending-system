@@ -6,6 +6,7 @@
   <div class="d-flex gap-2">
     <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print Receipt</button>
     <form action="/payments/<%= payment.payment_id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this payment and its receipt? The loan balance will be recalculated.');">
+      <%- csrfField %>
       <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash"></i>Delete Payment</button>
     </form>
   </div>
