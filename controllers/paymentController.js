@@ -126,8 +126,24 @@ exports.store = async (req, res) => {
 
     const paymentDetails = getPaymentDetails(req.body);
     const updatedBalance = roundMoney(currentBalance - amount);
-    const paymentType = updatedBalance <= 0 ? 'Full' : 'Partial';
+    // Respect user's payment_type selection unless balance reaches zero
+    const finalPaymentType = updatedBalance <= 0 ? 'Full' : payment_type;
     const status = resolveLoanStatus(updatedBalance, loan.due_date, loan.loan_status);
+
+    // Re-check balance within transaction to prevent race conditions
+    const [[freshLoan]] = await connection.query(
+      'SELECT remaining_balance, loan_status FROM loans_table WHERE loan_id = ? FOR UPDATE',
+      [loan_id]
+    );
+    
+    if (freshLoan.loan_status === 'Paid' || roundMoney(freshLoan.remaining_balance) <= 0) {
+      throw new Error('This loan is already fully paid.');
+    }
+    
+    const freshBalance = roundMoney(freshLoan.remaining_balance);
+    if (amount > freshBalance) {
+      throw new Error(`Payment amount cannot exceed the remaining balance of PHP ${freshBalance.toFixed(2)}.`);
+    }
 
     const [paymentResult] = await connection.query(
       `INSERT INTO payments_table
@@ -140,7 +156,7 @@ exports.store = async (req, res) => {
         payment_date,
         amount,
         updatedBalance,
-        paymentType,
+        finalPaymentType,
         paymentDetails.paymentMethod,
         paymentDetails.referenceNumber,
         paymentDetails.accountName,

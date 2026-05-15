@@ -162,12 +162,15 @@ exports.update = async (req, res) => {
       throw new Error('A loan can only be marked paid when recorded payments cover the full loan total.');
     }
 
+    const updatedBalance = roundMoney(total - totalPaid);
+    const newStatus = loan_status === 'Paid' ? 'Paid' : resolveLoanStatus(updatedBalance, due_date, loan_status);
+
     await connection.query(
       `UPDATE loans_table
        SET borrower_id = ?, loan_date = ?, due_date = ?, principal_amount = ?, interest_amount = ?,
-           total_amount = ?
+           total_amount = ?, remaining_balance = ?, loan_status = ?
        WHERE loan_id = ?`,
-      [borrower_id, loan_date, due_date, principal, interest, total, req.params.id]
+      [borrower_id, loan_date, due_date, principal, interest, total, updatedBalance, newStatus, req.params.id]
     );
 
     if (Number(existing.borrower_id) !== Number(borrower_id)) {
@@ -183,8 +186,8 @@ exports.update = async (req, res) => {
 
     await recalculateLoanLedger(
       connection,
-      { loan_id: req.params.id, total_amount: total, due_date, loan_status },
-      loan_status
+      { loan_id: req.params.id, total_amount: total, due_date, loan_status: newStatus, remaining_balance: updatedBalance },
+      newStatus
     );
 
     await connection.commit();

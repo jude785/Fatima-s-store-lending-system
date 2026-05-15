@@ -15,6 +15,21 @@ async function recordAudit(req, action, entityType, entityId = null, details = n
     );
   } catch (error) {
     console.error('Audit log failed:', error.message);
+    // Log to file for monitoring and debugging
+    const fs = require('fs');
+    const logEntry = `${new Date().toISOString()} - ${error.message}\n`;
+    
+    try {
+      fs.appendFileSync('/tmp/audit_errors.log', logEntry);
+    } catch (fileError) {
+      console.error('Failed to write audit error to file:', fileError.message);
+    }
+    
+    // In production, consider sending to external monitoring service
+    if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
+      // Placeholder for Sentry or similar integration
+      console.error('Production audit failure - consider external monitoring');
+    }
   }
 }
 
